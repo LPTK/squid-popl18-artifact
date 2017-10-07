@@ -2,14 +2,16 @@ package object popl18 {
   
   import Embedding.Predef._
   
-  private var lvl = 0
+  private[popl18] var lvl = 0
+  private[popl18] var errCount = 0
+  
   def test(name: String)(cde: => Unit): Unit = {
     val indent = "    " * lvl
     println(s"$indent> $name")
     lvl += 1
     //try { cde; println(s"${indent}OK.") }
     try cde
-    catch { case e: Throwable => println(s"Failed ($e @ ${e.getStackTrace()(1)})") }
+    catch { case e: Throwable => errCount += 1; System.err.println(s"! Failed ($e @ ${e.getStackTrace()(1)})") }
     finally lvl -= 1
   }
   

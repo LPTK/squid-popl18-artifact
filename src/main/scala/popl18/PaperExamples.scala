@@ -172,6 +172,56 @@ object PaperExamples extends App {
     
   }
   
-  println("Done.")
+  test("Embedding in Scala") {
+    
+    test("Context Requirements") {
+      
+      val pgrm = ir"val x: Int = ?y ; println(x + (?y:Int))"
+      val pgrm2: IR[Unit,{val y:Int; val z:Int}] = 
+        pgrm rewrite { case ir"($n:Int) + ($m:Int)" => ir"(-$m - $n) * (?z : Int)" }
+      
+      assertEqt(pgrm2,
+        ir"val x: Int = ?y ; println((-(?y:Int) - x) * (?z:Int))")
+      
+    }
+    
+    test("Use of Runtime Reflection and Metaprogramming") {
+      
+      test("Implementation of run and compile") {
+        
+        assert(ir"List(1,2,3).map(_+1)".run == List(2,3,4))
+        assert(ir"List(1,2,3).map(_+1)".compile == List(2,3,4))
+        
+      }
+      
+      test("Subtype Checking in Code Pattern Matching") {
+        
+        code"List(1,2,3)" match {
+          case code"$ls: Seq[Any]" => // note: runtime subtyping check happening here (List[Int] <: Seq[Any])
+            assertEqt(ls, code"List(1,2,3)")
+        }
+        
+        code"Math.pow(.5,3)" match {
+          case code"Math.pow($x,$y)" => // note: no type annotation necessary thanks to non-overloaded Math.pow
+            assertEqt(x, code".5")
+            assertEqt(y, code"3D")
+        }
+        
+      }
+      
+    }
+    
+  }
+  
+  test("Related Work") {
+    
+    assertEqt(
+      code"(x: Int) => ${ code{code"?x:Int"}.run }",
+      code"(x: Int) => x"
+    )
+    
+  }
+  
+  println(s"Errors: $errCount")
   
 }
